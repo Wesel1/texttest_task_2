@@ -1,7 +1,7 @@
-import json
-
 from datetime import datetime, timedelta, date
 import holidays
+
+from storage import Storage
 
 
 class DeadlineService():
@@ -39,21 +39,10 @@ class DeadlineService():
         return is_holiday or is_weekend
 
 
-class Dublicate_shall_not_pass():
-    def __init__(self, path_to_file: str):
-        self.path_to_file = path_to_file
-
-    def open_data_read(self) -> list:
-        try:
-            with open(self.path_to_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            data = []
-        return data
-
-    def open_data_write(self, data: list) -> None:
-        with open(self.path_to_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+class Duplicate_shall_not_pass():
+    def __init__(self, storage: Storage, deadline_service: DeadlineService):
+        self.storage = storage
+        self.deadline_service = deadline_service
 
     def verification_new_item(self, new_item: dict, data: list) -> bool:
         for i in data:
@@ -66,24 +55,32 @@ class Dublicate_shall_not_pass():
         return True
 
     def append_new_item(self, new_item: dict) -> None:
-        data = self.open_data_read()
+        data = self.storage.load_to_file()
 
         if self.verification_new_item(new_item, data):
             data.append(new_item)
-            self.open_data_write(data)
+            self.storage.save_to_file(data)
         else:
             raise ValueError("Duplicate")
 
 
-    def find_event_date(self, employee_id: int) -> list:
-        data = self.open_data_read()
-        event_dates = [i['event_date'] for i in data if i['employee_id'] == employee_id]
-        return event_dates
+    def get_reminders(self, employee_id: int) -> list:
+        all_reminders = []
+        data = self.storage.load_to_file()
+        events = [i['event_date'] for i in data if i['employee_id'] == employee_id]
+        for event in events:
+            deadline = self.deadline_service.calculate_deadline(event_date=event)
+            remind_dates = self.deadline_service.get_reminder_dates(deadline=deadline)
+            all_reminders.append(remind_dates)
+        return all_reminders
 
 if __name__ == '__main__':
-    service = Dublicate_shall_not_pass("data.json")
-    pa = service.find_event_date(10)
-    print(pa)
+    storage = Storage("data.json")
+    service_1 = DeadlineService()
+    service = Duplicate_shall_not_pass(storage, service_1)
+    test = {"employee_id": 12, "event_date": "2025-02-28", "event_type": "hiring"}
+    service.append_new_item(test)
+    print(service.get_reminders(10))
 
 
 # получаем уведомление -> открываем бд для чтения -> считываем всю информацию от туда ->
