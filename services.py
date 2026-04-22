@@ -47,7 +47,7 @@ class Dublicate_shall_not_pass():
         try:
             with open(self.path_to_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-        except FileNotFoundError:
+        except (FileNotFoundError, json.JSONDecodeError):
             data = []
         return data
 
