@@ -1,8 +1,8 @@
-from services import DeadlineService, Duplicate_shall_not_pass
+from services import DeadlineService, DuplicateShallNotPass
 import json
 
 test_service_1 = DeadlineService()
-test_service_2 = Duplicate_shall_not_pass("test_data.json")
+test_service_2 = DuplicateShallNotPass("test_data.json")
 
 data_always= [
   {

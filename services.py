@@ -3,32 +3,34 @@ import holidays
 
 from storage import Storage
 
+def trans(a: str) -> date:
+    return datetime.fromisoformat(a).date()
 
 class DeadlineService():
     def __init__(self):
         self.ru_holidays = holidays.Russia()
+        self.tuple_reminders = (1, 3, 7, 14, 30)
 
-    def calculate_deadline(self, event_date: str) -> str:
-        deadline = datetime.fromisoformat(event_date).date()
+    def calculate_deadline(self, event_date: date) -> date:
+        deadline = event_date
         i = 0
         while i < 3:
             deadline += timedelta(days=1)
             if not self.wrong_day(deadline):
                 i += 1
-        return str(deadline)
+        return deadline
 
 
-    def get_reminder_dates(self, deadline: str) -> list[str]:
+    def get_reminder_dates(self, deadline: date) -> list[date]:
         date_reminders = []
-        tuple_reminders = (1, 3, 7, 14, 30)
-        for i in tuple_reminders:
-            deadline_copy = datetime.fromisoformat(deadline).date()
+        for i in self.tuple_reminders:
+            deadline_copy = deadline
             count = 0
             while count < i:
                 deadline_copy -= timedelta(days=1)
                 if not self.wrong_day(deadline_copy):
                     count += 1
-            date_reminders.append(str(deadline_copy))
+            date_reminders.append(deadline_copy)
         return date_reminders
 
 
@@ -39,12 +41,13 @@ class DeadlineService():
         return is_holiday or is_weekend
 
 
-class Duplicate_shall_not_pass():
+class DuplicateShallNotPass():
     def __init__(self, storage: Storage, deadline_service: DeadlineService):
         self.storage = storage
         self.deadline_service = deadline_service
 
-    def verification_new_item(self, new_item: dict, data: list) -> bool:
+    @staticmethod
+    def verification_new_item(new_item: dict, data: list) -> bool:
         for i in data:
             if (
                 i["employee_id"] == new_item["employee_id"]
@@ -69,38 +72,7 @@ class Duplicate_shall_not_pass():
         data = self.storage.load_to_file()
         events = [i['event_date'] for i in data if i['employee_id'] == employee_id]
         for event in events:
-            deadline = self.deadline_service.calculate_deadline(event_date=event)
+            deadline = self.deadline_service.calculate_deadline(event_date=trans(event))
             remind_dates = self.deadline_service.get_reminder_dates(deadline=deadline)
             all_reminders.append(remind_dates)
         return all_reminders
-
-if __name__ == '__main__':
-    storage = Storage("data.json")
-    service_1 = DeadlineService()
-    service = Duplicate_shall_not_pass(storage, service_1)
-    test = {"employee_id": 12, "event_date": "2025-02-28", "event_type": "hiring"}
-    service.append_new_item(test)
-    print(service.get_reminders(10))
-
-
-# получаем уведомление -> открываем бд для чтения -> считываем всю информацию от туда ->
-# -> сравниваем инфу из бд с уведомлением -> открываем бд для записи -> перезаписываем
-#                                         -> вызываем ошибку
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
