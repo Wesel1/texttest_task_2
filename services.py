@@ -58,7 +58,7 @@ class DuplicateShallNotPass():
         return True
 
     def append_new_item(self, new_item: dict) -> None:
-        data = self.storage.load_to_file()
+        data = self.storage.load_from_file()
 
         if self.verification_new_item(new_item, data):
             data.append(new_item)
@@ -69,10 +69,11 @@ class DuplicateShallNotPass():
 
     def get_reminders(self, employee_id: int) -> list:
         all_reminders = []
-        data = self.storage.load_to_file()
-        events = [i['event_date'] for i in data if i['employee_id'] == employee_id]
-        for event in events:
-            deadline = self.deadline_service.calculate_deadline(event_date=trans(event))
-            remind_dates = self.deadline_service.get_reminder_dates(deadline=deadline)
-            all_reminders.append(remind_dates)
+        data = self.storage.load_from_file()
+        if data:
+            events = [i['event_date'] for i in data if i['employee_id'] == employee_id]
+            for event in events:
+                deadline = self.deadline_service.calculate_deadline(event_date=trans(event))
+                remind_dates = self.deadline_service.get_reminder_dates(deadline=deadline)
+                all_reminders.append(remind_dates)
         return all_reminders

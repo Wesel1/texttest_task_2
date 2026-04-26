@@ -4,7 +4,7 @@ class Storage:
     def __init__(self, path: str):
         self.path = path
 
-    def load_to_file(self) -> list | list[tuple]:
+    def load_from_file(self) -> list | list[tuple]:
         try:
             with open(self.path, "r", encoding="utf-8") as f:
                 data = json.load(f)
